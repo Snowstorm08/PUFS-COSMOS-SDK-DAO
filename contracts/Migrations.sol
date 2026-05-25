@@ -1,23 +1,36 @@
-pragma solidity <0.9.0;
+pragma solidity ^0.8.28;
 
 contract Migrations {
-  address public owner;
-  uint256 public last_completed_migration;
+    address public immutable owner;
+    uint256 public lastCompletedMigration;
 
-  constructor() public {
-    owner = msg.sender;
-  }
+    event MigrationCompleted(uint256 migrationId);
+    event Upgraded(address indexed newContract);
 
-  modifier restricted() {
-    if (msg.sender == owner) _;
-  }
+    constructor() {
+        owner = msg.sender;
+    }
 
-  function setCompleted(uint256 completed) public restricted {
-    last_completed_migration = completed;
-  }
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner");
+        _;
+    }
 
-  function upgrade(address new_address) public restricted {
-    Migrations upgraded = Migrations(new_address);
-    upgraded.setCompleted(last_completed_migration);
-  }
+    function setCompleted(
+        uint256 completed
+    ) external onlyOwner {
+        lastCompletedMigration = completed;
+
+        emit MigrationCompleted(completed);
+    }
+
+    function upgrade(
+        address newAddress
+    ) external onlyOwner {
+        Migrations upgraded = Migrations(newAddress);
+
+        upgraded.setCompleted(lastCompletedMigration);
+
+        emit Upgraded(newAddress);
+    }
 }
